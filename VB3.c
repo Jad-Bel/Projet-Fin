@@ -21,20 +21,21 @@ typedef struct {
     struct Date date;
 } Reservation;
 
-Reservation reservations[MAX_RESERVATIONS];
-int nombreReservations = 10;  
-
 void ajReservation();
 void modifReservation();
-void supReservation();
 void affReservation();
 void triReservation();
+void rechercherReservation();
 void affStats();
-int teleValide(char telephone[]);
+int teleValide(char telephone[15]);  
 int dateValide(struct Date date);
 void reservDef();
 void menu();
-void rechercherReservation();
+
+Reservation reservations[MAX_RESERVATIONS];
+int nombreReservations = 10;  
+
+
 
 int main() {
     reservDef();
@@ -191,6 +192,19 @@ void menu() {
     } while (choix != 7);
 }
 
+int dateValide(struct Date date) {
+    if (date.annee < 2024 || date.annee > 2030 || date.mois < 1 || date.mois > 12) 
+        return 0;
+
+    int joursDansMois[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    
+    if (date.mois == 2 && ((date.annee % 4 == 0 && date.annee % 100 != 0) || (date.annee % 400 == 0))) {
+        joursDansMois[2] = 29; 
+    }
+
+    return (date.jour >= 1 && date.jour <= joursDansMois[date.mois]);
+}
+
 void ajReservation() {
     if (nombreReservations >= MAX_RESERVATIONS) {
         printf("Plus de place pour de nouvelles reservations !\n");
@@ -220,8 +234,8 @@ void ajReservation() {
     scanf("%s", nouvelleReservation.statut);
 
     do {
-        printf("Entrez la date (jj mm aaaa) : ");
-        scanf("%d %d %d", &nouvelleReservation.date.jour, &nouvelleReservation.date.mois, &nouvelleReservation.date.annee);
+        printf("Entrez la date (jj/mm/aaaa) : ");
+        scanf("%d/%d/%d", &nouvelleReservation.date.jour, &nouvelleReservation.date.mois, &nouvelleReservation.date.annee);
         if (!dateValide(nouvelleReservation.date)) {
             printf("Date invalide !\n");
         }
@@ -241,19 +255,6 @@ int teleValide(char telephone[]) {
         }
     }
     return 1;
-}
-
-int dateValide(struct Date date) {
-    if (date.annee < 2024 || date.annee > 2030 || date.mois < 1 || date.mois > 12) 
-        return 0;
-
-    int joursDansMois[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    
-    if (date.mois == 2 && ((date.annee % 4 == 0 && date.annee % 100 != 0) || (date.annee % 400 == 0))) {
-        joursDansMois[2] = 29; 
-    }
-
-    return (date.jour >= 1 && date.jour <= joursDansMois[date.mois]);
 }
 
 void modifReservation() {
@@ -409,7 +410,82 @@ void rechercherReservation() {
     } while (choixRech != 3);
 }
 
+void moyenneAge() {
+    if (nombreReservations == 0) {
+        printf("Aucune reservation a afficher.\n");
+        return;
+    }
+    int sommeAge = 0;
+    for (int i = 0; i < nombreReservations; i++) {
+        sommeAge += reservations[i].age;
+    }
+    float moyenneAge = (float)sommeAge / nombreReservations;
+    printf("Moyenne d'âge des patients : %.2f ans\n", moyenneAge);
+}
+
+void patientsParTranche() {
+    int tranche1 = 0, tranche2 = 0, tranche3 = 0;
+    for (int i = 0; i < nombreReservations; i++) {
+        if (reservations[i].age <= 18) {
+            tranche1++;
+        } else if (reservations[i].age <= 35) {
+            tranche2++;
+        } else {
+            tranche3++;
+        }
+    }
+    printf("Nombre de patients par tranche d'âge :\n");
+    printf("0-18 ans : %d\n", tranche1);
+    printf("19-35 ans : %d\n", tranche2);
+    printf("36+ ans : %d\n", tranche3);
+}
+
+void reservationsParStatut() {
+    int valides = 0, annules = 0, enAttente = 0, autres = 0;
+    for (int i = 0; i < nombreReservations; i++) {
+        if (strcmp(reservations[i].statut, "Confirmé") == 0) {
+            valides++;
+        } else if (strcmp(reservations[i].statut, "Annulé") == 0) {
+            annules++;
+        } else if (strcmp(reservations[i].statut, "Attente") == 0) {
+            enAttente++;
+        } else {
+            autres++;
+        }
+    }
+    printf("Statistiques par statut :\n");
+    printf("Validé : %d\n", valides);
+    printf("Annulé : %d\n", annules);
+    printf("En attente : %d\n", enAttente);
+    printf("Autres : %d\n", autres);
+}
+
 void affStats() {
-    printf("Nombre total de reservations : %d\n", nombreReservations);
-    // Here, you could add more statistics if needed
+    int choix;
+    do {
+        printf("\n*** Sous-menu Statistiques ***\n");
+        printf("1. Moyenne d'âge des patients\n");
+        printf("2. Nombre de patients par tranche d'âge\n");
+        printf("3. Nombre total de réservations par statut\n");
+        printf("4. Retourner au menu principal\n");
+        printf("Entrez votre choix : ");
+        scanf("%d", &choix);
+
+        switch (choix) {
+            case 1:
+                moyenneAge();
+                break;
+            case 2:
+                patientsParTranche();
+                break;
+            case 3:
+                reservationsParStatut();
+                break;
+            case 4:
+                printf("Retour au menu principal...\n");
+                break;
+            default:
+                printf("Choix invalide.\n");
+        }
+    } while (choix != 4);
 }
